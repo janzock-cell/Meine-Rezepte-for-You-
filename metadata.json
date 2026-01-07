@@ -1,0 +1,7 @@
+{
+  "name": "lecker. | Gourmet AI",
+  "description": "Rezepte NUR nach deinem Wunsch! Foto vom Kühlschrank oder schnelle Gerichte von Top-Köchen.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

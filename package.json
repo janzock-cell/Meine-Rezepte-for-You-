@@ -1,15 +1,19 @@
+
 {
   "name": "azubi-rezepte-sammlung",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "A Netlify-friendly recipe generator for apprentices using the Gemini API.",
+  "description": "A hybrid local/cloud recipe generator for apprentices.",
   "scripts": {
     "dev": "netlify dev",
-    "build": "esbuild index.tsx --bundle --outfile=index.js --format=esm",
+    "build": "esbuild index.tsx --bundle --outfile=index.js --format=esm --define:process.env.API_KEY=\"\\\"$API_KEY\\\"\"",
     "test": "jest"
   },
   "dependencies": {
-    "@google/genai": "^0.14.0"
+    "@google/genai": "^0.14.0",
+    "firebase": "^10.8.0",
+    "cropperjs": "^1.6.1",
+    "canvas-confetti": "^1.9.2"
   },
   "devDependencies": {
     "@netlify/functions": "^2.7.0",

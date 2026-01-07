@@ -3,7 +3,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { Handler } from "@netlify/functions";
 
 // --- Gemini AI Setup ---
-// Initialize the AI client with the API key from environment variables
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
 // --- Schemas for Structured Output ---
@@ -74,7 +73,6 @@ export const handler: Handler = async (event) => {
 
     let result;
     
-    // Handle recipe generation requests
     if (type === 'generate') {
       const { prompt: dishPrompt, difficulty, wishes, servings } = body;
       const prompt = `
@@ -87,7 +85,7 @@ export const handler: Handler = async (event) => {
         Zusätzliche Wünsche: "${wishes || 'Keine'}"
       `;
       result = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -95,30 +93,29 @@ export const handler: Handler = async (event) => {
         },
       });
 
-    // Handle OCR (image-to-text) requests
     } else if (type === 'ocr') {
       const { image, mimeType } = body;
       const imagePart = {
         inlineData: { mimeType, data: image },
       };
       const prompt = `
-            Analysiere das folgende Bild eines Rezepts. Das Bild enthält wahrscheinlich **handschriftlichen Text**, der in Schreibschrift oder Druckbuchstaben verfasst sein kann. Das Bild könnte auch schlecht beleuchtet oder verschwommen sein.
+            Analysiere das folgende Bild eines Rezepts. 
+            
+            **Qualitätshinweis:** Das Bild könnte schlechte Lichtverhältnisse, Schatten, Rauschen oder eine geringe Auflösung aufweisen.
+            **Spezialanweisungen für Bildstörungen:**
+            - Kompensiere visuelle Artefakte, Überbelichtung oder Unterbelichtung mental.
+            - Gib dein Bestes, um auch unklare oder handschriftliche Texte zu entziffern.
+            - Konzentriere dich darauf, den Sinn und die wesentlichen Informationen (Zutaten, Schritte) zu erfassen.
+            - Wenn ein Wort mehrdeutig ist, versuche, es aus dem kulinarischen Kontext zu erschließen.
 
-            **Spezialanweisungen für Handschrift:**
-            - Gib dein Bestes, um auch unklare Handschriften zu entziffern.
-            - Konzentriere dich darauf, den Sinn und die wesentlichen Informationen (Zutaten, Schritte) zu erfassen, auch wenn einzelne Buchstaben schwer zu lesen sind.
-            - Wenn ein Wort mehrdeutig ist, versuche, es aus dem Kontext des Rezepts zu erschließen. Priorisiere eine lesbare und plausible Interpretation gegenüber einer buchstabengetreuen, aber unsinnigen Transkription.
-
-            **Allgemeine Anweisungen:**
-            1. Wenn der Text trotz aller Bemühungen **völlig unleserlich** ist (z.B. durch extreme Unschärfe oder sehr unordentliche Schrift), setze 'isReadable' auf 'false' und gib im Feld 'unreadableReason' eine kurze Begründung an (z.B. 'handschriftlich unleserlich', 'stark verschwommen').
-            2. Wenn das Rezept zumindest teilweise entziffert werden kann, setze 'isReadable' auf 'true' und extrahiere den Rezeptnamen, die Zutaten und die Anleitung so gut wie möglich.
-            3. Lasse Felder leer, wenn die entsprechenden Informationen nicht auf dem Bild vorhanden sind oder nicht entziffert werden können.
-
-            Gib die Antwort als einzelnes JSON-Objekt zurück, das dem bereitgestellten Schema entspricht. Gib keinen Markdown oder zusätzlichen Text aus.
+            **Anweisungen:**
+            1. Wenn der Text völlig unleserlich ist, setze 'isReadable' auf 'false'.
+            2. Wenn das Rezept entziffert werden kann, setze 'isReadable' auf 'true' und extrahiere die Daten.
+            3. Gib die Antwort als einzelnes JSON-Objekt zurück, das dem bereitgestellten Schema entspricht.
         `;
 
       result = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         contents: { parts: [imagePart, { text: prompt }] },
         config: {
           responseMimeType: "application/json",

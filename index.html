@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>lecker. | Gourmet AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+    <link rel="stylesheet" href="index.css">
+    <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^0.14.0",
+    "cropperjs": "https://ga.jspm.io/npm:cropperjs@1.6.1/dist/cropper.esm.js",
+    "canvas-confetti": "https://ga.jspm.io/npm:canvas-confetti@1.9.2/dist/confetti.module.mjs",
+    "@netlify/functions": "https://esm.sh/@netlify/functions@^5.1.2",
+    "@jest/globals": "https://esm.sh/@jest/globals@^30.2.0",
+    "firebase/": "https://esm.sh/firebase@^12.7.0/"
+  }
+}
+</script>
+    <script type="module" src="index.js"></script>
+</head>
+<body class="dark-theme">
+    <div id="app-container">
+        <!-- Brand Header -->
+        <header class="app-header">
+            <div class="brand-section">
+                <p class="brand-sub">komm! wir machen uns ...</p>
+                <h1 class="brand-main">lecker<span>.</span></h1>
+            </div>
+            <div class="header-actions">
+                <button id="theme-toggle" class="theme-switch-btn" title="Modus wechseln">
+                    <span class="mode-icon">☀️</span>
+                </button>
+                <div class="xp-badge"><span id="user-points-display">0</span> XP</div>
+            </div>
+        </header>
+
+        <!-- Main Content (Scrollable Area) -->
+        <main id="main-content">
+            <!-- Tab 1: Entdecken -->
+            <section id="tab-discover" class="tab-pane active">
+                <div class="glass-card search-container">
+                    <form id="recipe-form">
+                        <div class="input-group">
+                            <label>Inspiration gesucht?</label>
+                            <div class="search-row">
+                                <input type="text" id="prompt-input" placeholder="z.B. Schnelle Pasta">
+                                <button type="submit" class="go-btn">Go</button>
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label>Niveau</label>
+                                <select id="difficulty-select">
+                                    <option value="leicht">Einfach</option>
+                                    <option value="mittel" selected>Gourmet</option>
+                                    <option value="schwer">Chef</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Portionen</label>
+                                <input type="number" id="servings-input" value="2" min="1">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Spezialwünsche</label>
+                            <input type="text" id="wishes-input" placeholder="Vegan, Low Carb...">
+                        </div>
+                    </form>
+                </div>
+                <div id="recipe-output"></div>
+                <div id="recipe-actions-container" class="hidden"></div>
+            </section>
+
+            <!-- Tab 2: Buch -->
+            <section id="tab-book" class="tab-pane">
+                <div class="section-title">
+                    <h2>Mein Kochbuch</h2>
+                    <p>Gespeicherte Gourmet-Ideen</p>
+                </div>
+                <div id="saved-recipes-list" class="recipe-grid"></div>
+            </section>
+
+            <!-- Tab 3: Einkaufsliste -->
+            <section id="tab-shopping" class="tab-pane">
+                <div class="section-title">
+                    <h2>Einkaufsliste</h2>
+                    <p>Zutaten im Überblick</p>
+                </div>
+                <div id="shopping-list-content"></div>
+                <button id="clear-shopping-btn" class="secondary-btn hidden" style="margin-top:20px;">Liste leeren</button>
+            </section>
+        </main>
+
+        <!-- Fixed Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-tab="tab-discover">
+                <span class="nav-icon">✨</span>
+                <span class="nav-label">Entdecken</span>
+            </button>
+            <button class="nav-item" data-tab="tab-book">
+                <span class="nav-icon">📖</span>
+                <span class="nav-label">Buch</span>
+                <span id="saved-count-badge" class="nav-badge hidden">0</span>
+            </button>
+            
+            <div class="nav-center">
+                <button id="fridge-mode-btn" class="scan-fab" title="Magic Scanner">
+                    <span class="scan-icon">📸</span>
+                </button>
+            </div>
+
+            <button class="nav-item" data-tab="tab-shopping">
+                <span class="nav-icon">🛒</span>
+                <span class="nav-label">Liste</span>
+                <span id="shopping-count-badge" class="nav-badge hidden">0</span>
+            </button>
+            <button id="manual-entry-nav-btn" class="nav-item">
+                <span class="nav-icon">✍️</span>
+                <span class="nav-label">Eintragen</span>
+            </button>
+        </nav>
+
+        <!-- Modals -->
+        <div id="loading-indicator" class="modal-overlay hidden">
+            <div class="loader-content">
+                <div class="chef-loader"></div>
+                <p id="loading-text">Küchenchef kreiert...</p>
+            </div>
+        </div>
+
+        <!-- MAGIC SCANNER MODAL (Fixed Layout) -->
+        <div id="fridge-modal" class="modal-overlay hidden">
+            <div class="modal-content glass">
+                <button class="close-btn" title="Schließen">&times;</button>
+                <div class="modal-header">
+                    <h2>Magic Scanner</h2>
+                    <p>Wähle deine Methode</p>
+                </div>
+                <div class="scanner-grid">
+                    <label for="ocr-input" class="ocr-action-card">
+                        <span class="card-emoji">📷</span>
+                        <div class="card-body">
+                            <strong>Foto aufnehmen</strong>
+                            <span>Scannt Text & Zutaten</span>
+                        </div>
+                        <input type="file" id="ocr-input" class="hidden" accept="image/*" capture="environment">
+                    </label>
+                    <div class="manual-list-zone">
+                        <label>Was hast du da?</label>
+                        <textarea id="fridge-inventory" placeholder="Eier, Milch, Speck..."></textarea>
+                        <button id="magic-process-btn" class="primary-btn gold-glow">Inspiration starten</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MANUAL ENTRY MODAL -->
+        <div id="manual-recipe-modal" class="modal-overlay hidden">
+            <div class="modal-content glass scrollable">
+                <button class="close-btn">&times;</button>
+                <div class="modal-header"><h2>Rezept eintragen</h2></div>
+                <div class="manual-form">
+                    <input type="text" id="manual-name" placeholder="Name des Gerichts">
+                    <textarea id="manual-ingredients" placeholder="Zutaten (eine pro Zeile)..." style="height:120px;"></textarea>
+                    <textarea id="manual-instructions" placeholder="Schritte..." style="height:120px;"></textarea>
+                </div>
+                <button id="save-manual-btn" class="primary-btn gold-glow">Im Buch speichern</button>
+            </div>
+        </div>
+
+        <!-- CROPPER FULLSCREEN -->
+        <div id="cropper-modal" class="modal-overlay hidden no-padding">
+            <div class="cropper-fullscreen-content">
+                <div class="crop-area">
+                    <img id="cropper-image" alt="Zuschneiden">
+                </div>
+                <div class="crop-actions">
+                    <button id="confirm-crop-btn" class="primary-btn gold-glow">Scan starten</button>
+                    <button id="cancel-crop-btn" class="secondary-btn">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Draft Toast -->
+        <div id="draft-notification" class="draft-toast hidden">
+            <p>Draft gefunden!</p>
+            <div class="draft-actions">
+                <button id="restore-draft-btn">Laden</button>
+                <button id="dismiss-draft-btn" class="text-btn">Löschen</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

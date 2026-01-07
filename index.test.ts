@@ -162,7 +162,8 @@ describe('LocalStorage and Draft Functions', () => {
         description: 'Eine einfache Nudelgericht',
         ingredients: ['500g Nudeln', '2 Dosen Tomaten'],
         instructions: ['Kochen', 'Mischen'],
-        servings: 4
+        servings: 4,
+        rating: 3
     };
 
     const mockRecipe2 = {
@@ -170,7 +171,8 @@ describe('LocalStorage and Draft Functions', () => {
         description: 'Ein würziges Gericht',
         ingredients: ['200g Reis', '300g Hähnchen', '2 EL Currypulver'],
         instructions: ['Braten', 'Kochen'],
-        servings: 2
+        servings: 2,
+        rating: 2
     };
 
     beforeEach(() => {
@@ -236,7 +238,8 @@ describe('LocalStorage and Draft Functions', () => {
                 description: 'Test',
                 ingredients: ['100g Mehl', '2 Eier', 'Prise Salz'],
                 instructions: [],
-                servings: 2
+                servings: 2,
+                rating: 3
             };
             
             // Scale to 4 servings
@@ -254,7 +257,8 @@ describe('LocalStorage and Draft Functions', () => {
                 description: 'Test',
                 ingredients: ['100g Mehl'],
                 instructions: [],
-                servings: undefined as any // Simulate old data
+                servings: undefined as any, // Simulate old data
+                rating: 3
             };
             
             // Should return original if no base servings known (or we could default to 4, implementation dependent)
